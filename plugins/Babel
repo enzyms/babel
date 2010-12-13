@@ -1,0 +1,135 @@
+<?php
+/**
+ * Babel 1.0.1-pl1 Plugin
+ * Events: OnDocFormRender,OnDocFormSave (OnResourceDuplicate in the next version)
+ * @author Enzyms <enzyms@gmail.com>
+ */  
+  
+  
+  
+  require_once $modx->getOption('babel.core_path', null, $modx->getOption('core_path').'components/babel/').'babel.class.php';
+ 
+  $babel = new Babel($modx);
+    
+  if ($modx->event->name == 'OnResourceDuplicate') {     
+    
+    $b_ids = $modx->getObject('modTemplateVar',array('name'=>'babel_ids'));
+    $new_babel_ids = $b_ids->setValue($newResource->get('id'),'');   
+    return;
+  }
+ 
+  if ($resource == null) return;
+
+  // are properties configured? (to ameliorate...)
+  $tvs_prop = $scriptProperties['identical_tvs'];
+  $ctxt_prop = $scriptProperties['contexts'];
+  $ctxt_nm_prop = $scriptProperties['contexts_names'];  
+  //$prop1 = $babel->isPropertyConfigured($tvs_prop);
+  $prop2 = $babel->isPropertyConfigured($ctxt_prop);
+  $prop3 = $babel->isPropertyConfigured($ctxt_nm_prop);
+  //if ($prop1!='yes') {$output .= $prop1; return;}
+  if ($prop2!='yes') {$output .= $prop2; return;}
+  if ($prop3!='yes') {$output .= $prop3; return;}
+    
+  $tvs_to_duplicate = explode(',', $tvs_prop);
+  $tvs_to_duplicate = array_map( 'trim', $tvs_to_duplicate );
+  $contexts = explode(',', $ctxt_prop);
+  $contexts = array_map( 'trim', $contexts );
+  $contexts_names = explode(',', $ctxt_nm_prop);
+  $contexts_names = array_map( 'trim', $contexts_names );
+  
+  $current_id = $resource->get('id');
+  
+  $newdoc_ids = array();
+  $main_context = $contexts[0];
+  
+  
+  
+  if ($modx->event->name == 'OnDocFormPrerender') {
+   
+    $output .= '<div id="babelbox">';
+    
+    // this lines can be optimized:
+    //$template_id = $resource->get('template');     
+    $babel->createBabelTV($resource,$template_id);
+    
+    $tv_babel_ids = $modx->getObject('modTemplateVar',array('name'=>'babel_ids'));
+    $is_translated = $tv_babel_ids->getValue($current_id);
+   
+    $initBabel = $_GET['initBabel']; //init via url
+    
+    if ( $initBabel == 'yes'){
+    
+      if ($is_translated == null){  
+         
+        if ($resource->get('context_key') != $main_context){return;}
+        
+        // start translating
+  
+        $babel_ids = $current_id; // begin the completion     
+       
+        $i = 0;
+        foreach($contexts as $context){
+          if($context!=$main_context){
+            $newdoc_ids[$i] = $babel->duplicateDocument($resource,$context, $contexts);
+            $babel->duplicateTvs($current_id,$newdoc_ids[$i], $tvs_to_duplicate);
+            $babel_ids .= ':'.$newdoc_ids[$i];
+          }else{
+            $newdoc_ids[$i] = $current_id;
+          }
+          $i++;
+        }
+        
+        $j=0;
+        foreach($contexts as $context){
+          $tv_babel_ids->setValue($newdoc_ids[$j],$babel_ids);
+          $tv_babel_ids->save();
+          $j++;
+        }     
+      }     
+      $output .= $babel->showLangLinks($current_id, $contexts_names);
+      
+           
+    }else{ // if initBabel = null
+      
+      if ($is_translated == null){
+        if ($resource->get('context_key') != $main_context){return;}
+        $output .= $babel->showTranslateButton($current_id,'Create translations');  
+      }else{
+        $output .= $babel->showLangLinks($current_id, $contexts_names);
+      }
+    
+    }
+   
+    ///// OUTPUT /////////////      
+    $output .= '</div>';
+    $modx->event->output($output);
+    return;
+    
+  }
+  
+  
+  
+  
+  if ($modx->event->name == 'OnDocFormSave') {
+    
+    // apply modifications only from the main context:
+    if ($resource->get('context_key') != $main_context){return;}
+    
+    // is translated?
+    $tv_babel_ids = $modx->getObject('modTemplateVar',array('name'=>'babel_ids'));
+    if ($tv_babel_ids==null)return;
+    $data = $tv_babel_ids->getValue($current_id);    
+    
+    // yes:
+    if ($data!= null){
+    
+      $babel_ids = explode(":", $data);
+      $j=0;
+        foreach($babel_ids as $lang_id){
+          $babel->duplicateTvs($current_id,$lang_id, $tvs_to_duplicate);
+          $j++;
+        }
+    }      
+    return;
+  }
