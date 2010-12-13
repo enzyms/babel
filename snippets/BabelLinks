@@ -1,0 +1,73 @@
+<?php
+if($modx->context->get('key') == "mgr"){return;};
+  
+      $currentid = $modx->resource->get('id');
+      
+      $plugin = $modx->getObject('modPlugin',array('name'=>'Babel'));
+      $plugin_props = $plugin->get('properties');
+    
+      $contexts = explode(',',$plugin_props['contexts']['value']);
+      
+      if ($contextNames == null){
+        $contexts_names = explode(',',$plugin_props['contexts_names']['value']);
+      }else{
+        $contexts_names = explode(',',$contextNames);
+      }
+      
+      $contexts = array_map( 'trim', $contexts );
+      $contexts_names = array_map( 'trim', $contexts_names );
+    
+      $b_ids = $modx->getObject('modTemplateVar',array('name'=>'babel_ids'));
+      $b_data = $b_ids->getValue($currentid);
+      
+      $b_data == null ? $no_babel_ids = true : $no_babel_ids = false;
+  
+      $babel_ids = explode(":", $b_data);
+  
+      $output = '';  
+  
+      $i = 0;
+      foreach($contexts as $context){
+        
+          $modx->resource->get('context_key') == $context ? $selected = 'selected' : $selected = '';  
+          
+          $doc= $modx->getObject('modResource',$babel_ids[$i]);
+          
+          if (($no_babel_ids == true)||($doc->get('published')==0)){
+            $modx->switchContext($context);
+            $link = $modx->config['site_url'];;
+          }else{
+            $link = $modx->makeUrl($babel_ids[$i], $context,'','full');  
+          }
+          
+          $tpl = $modx->getOption('tpl',$scriptProperties,'BabelLinksTpl');
+          
+          $output .= $modx->getChunk($tpl,array(  
+             'link' => $link,    
+             'name' => $contexts_names[$i],
+             'selected' => $selected  
+          ));
+          
+          
+          $i++;
+      }
+    
+      return ($output);
+
+
+
+      /*
+      // no babel_ids? ->check recursively the parents:
+      if(!function_exists('getParentBabel_Ids')){
+        function getParentBabel_Ids($current_resource, $all_b_ids) {
+          global $modx;
+          $parent_id = $current_resource->get('parent');
+          if($parent_id == 0) return('0:0:0');
+          $p_data = $all_b_ids->getValue($parent_id);
+          if($p_data == null){
+            $p_data = getParentBabel_Ids($current_resource->getOne('Parent'), $all_b_ids);
+          }
+          return ($p_data);
+        }
+      }
+      */
