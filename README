@@ -1,1 +1,92 @@
-hi there
+--------------------
+Extra: Babel
+--------------------
+Version: 1.0.0
+Created: November 2010
+Author: Sylvain Aerni <enzyms@gmail.com>
+License: GNU GPLv2 (or later at your option)
+
+--------------------
+Description
+--------------------
+
+Babel is a plugin who creates linked documents cross different contexts. The easy way for your multilingual site!
+
+Example: you have 3 contexts: web, fr and de (for English, French and German languages). 'Web' is your main context. You create a resource in it and after saving you document, Babel shows you a «create translation» button. Clicking on it will duplicate your document and all its contents in the other contexts, fr and de. Links between these three documents are created for an easy navigation.
+
+You can also configure the template variables (TV) you want to «follow» when saving the document in the main context. For example, when you modify the value of a TV in the 'web' context, modifications will also occur in the other contexts.
+
+
+--------------------
+Installation
+--------------------
+
+1. first create a context for each language (please refer to this tutorial: http://churn.butter.com.hk/posts/2010/08/internationalization-in-modx-revolution.html). Be sure that your context switches work well.
+
+2. install Babel via package manager.
+
+3. go to the plugin properties panel and set the following properties:
+
+3.1 'contexts' property: all the contexts you want to link. Set them with coma separated. Example: web,fr,de (beware of the order of the elements, the first one is considered as the main context). This property must be configured.
+
+3.2 'contexts_names' property: the names of the languages you want to appear in the links. Example: English,French,German
+This property must be configured. 
+
+3.3 'identical_tvs' property: all the template variables you want to replicate. When you modify a TV in the main context ('web' in our example), the template variable will take the same value in the other contexts. You don't need to change the value in all contexts anymore! Use the id of the TV's you want to replicate, coma separated. Example: 1,2,4,5. Leave the value to 'none' if you don't wan't TV replication.
+
+4. Save the babel plugin.
+
+You can now create documents in the main context, a button will appear a the top of the document for the translations. When you 'translate' a document, all content and TV's are copied the first time. After that, only the TV's you configured will change in each context when saving the main document.
+
+--------------------
+Snippet usage 
+--------------------
+
+BabelLinks is a snippet who lists your different contexts in the frontend. You can call the snippet in your templates like this:
+
+<ul class="contexts">
+  [[BabelLinks? ]]
+</ul>
+
+
+You can overwrite the names of the contexts like this:
+
+[[BabelLinks? &contextNames=`fr,de,en`]]
+
+by default, the names setted in the babel plugin properties are used.
+
+
+ 
+The snippet use the BabelLinksTpl chunk for creating the list, you can use your own chunk:
+
+[[BabelLinks? &contextNames=`fr,de,en` &tpl=`yourOwnChunk`]]
+
+or of course edit the BabelLinksTpl chunk directly.
+
+
+
+
+
+--------------------
+Hints and explanations
+--------------------
+Babel plugin creates a new Template Variable named 'babel_ids' and store the ids of the binded documents. For example, you have 3 contexts and the id of your document in the main context is 1. You 'translate' your document and two other docs are created, with id 23 and 24. The babel_ids take this form:
+1:23:24
+If you have already existing pages and you installed Babel plugin after that — and if you understand the mechanism — you can bind pages manually by editing babel_ids. (hum, at your own risks, but its not so dangerous ;)
+
+
+
+
+
+
+Have fun!
+S.
+
+
+
+
+
+
+
+
+
